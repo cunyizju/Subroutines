@@ -48,30 +48,46 @@
       INTEGER YLDM,iterationCount,i
       DOUBLE PRECISION exStress(8),exLankford(8),yldCPrime(6,6),
      & yldCDbPrime(6,6),LEARNINGRATE,TOL,WEIGHTS,WEIGHTR,WEIGHTB,
-     & dCFactors(14),error,errorFunc
+     & dCFactors(14),error,errorFunc,MOMENTUM,predCFactors(14)
       PARAMETER(LEARNINGRATE=0.1D-6,TOL=.8D-3,WEIGHTS=1.0D0,
-     & WEIGHTR=0.0D0,WEIGHTB=0.0D0)
+     & WEIGHTR=0.0D0,WEIGHTB=0.0D0,MOMENTUM=0.2D0)
       dCFactors(:) = 1.0D0
+      iterationCount = 0
       error = errorFunc(YLDM,WEIGHTS,WEIGHTR,WEIGHTB,
      & exStress,exLankford,yldCPrime,yldCDbPrime)
       DO WHILE (error>TOL)
         CALL calc_dCFactors(YLDM,WEIGHTS,WEIGHTR,WEIGHTB,exStress,
      &   exLankford,yldCPrime,yldCDbPrime,dCFactors)
         dCFactors(:) = (1.0D0)*dCFactors(:)
-        yldCPrime(1,2) = yldCPrime(1,2) - LEARNINGRATE*dCFactors(1)
-        yldCPrime(1,3) = yldCPrime(1,3) - LEARNINGRATE*dCFactors(2)
-        yldCPrime(2,1) = yldCPrime(2,1) - LEARNINGRATE*dCFactors(3)
-        yldCPrime(2,3) = yldCPrime(2,3) - LEARNINGRATE*dCFactors(4)
-        yldCPrime(3,1) = yldCPrime(3,1) - LEARNINGRATE*dCFactors(5)
-        yldCPrime(3,2) = yldCPrime(3,2) - LEARNINGRATE*dCFactors(6)
-        yldCPrime(4,4) = yldCPrime(4,4) - LEARNINGRATE*dCFactors(7)
-        yldCDbPrime(1,2) = yldCDbPrime(1,2) - LEARNINGRATE*dCFactors(8)
-        yldCDbPrime(1,3) = yldCDbPrime(1,3) - LEARNINGRATE*dCFactors(9)
-        yldCDbPrime(2,1) = yldCDbPrime(2,1) - LEARNINGRATE*dCFactors(10)
-        yldCDbPrime(2,3) = yldCDbPrime(2,3) - LEARNINGRATE*dCFactors(11)
-        yldCDbPrime(3,1) = yldCDbPrime(3,1) - LEARNINGRATE*dCFactors(12)
-        yldCDbPrime(3,2) = yldCDbPrime(3,2) - LEARNINGRATE*dCFactors(13)
-        yldCDbPrime(4,4) = yldCDbPrime(4,4) - LEARNINGRATE*dCFactors(14)
+        yldCPrime(1,2) = yldCPrime(1,2) - (1-MOMENTUM)*LEARNINGRATE*
+     &   dCFactors(1) + LEARNINGRATE*MOMENTUM*predCFactors(1)
+        yldCPrime(1,3) = yldCPrime(1,3) - (1-MOMENTUM)*LEARNINGRATE*
+     &   dCFactors(2) + LEARNINGRATE*MOMENTUM*predCFactors(2)
+        yldCPrime(2,1) = yldCPrime(2,1) - (1-MOMENTUM)*LEARNINGRATE*
+     &   dCFactors(3) + LEARNINGRATE*MOMENTUM*predCFactors(3)
+        yldCPrime(2,3) = yldCPrime(2,3) - (1-MOMENTUM)*LEARNINGRATE*
+     &   dCFactors(4) + LEARNINGRATE*MOMENTUM*predCFactors(4)
+        yldCPrime(3,1) = yldCPrime(3,1) - (1-MOMENTUM)*LEARNINGRATE*
+     &   dCFactors(5) + LEARNINGRATE*MOMENTUM*predCFactors(5)
+        yldCPrime(3,2) = yldCPrime(3,2) - (1-MOMENTUM)*LEARNINGRATE*
+     &   dCFactors(6) + LEARNINGRATE*MOMENTUM*predCFactors(6)
+        yldCPrime(4,4) = yldCPrime(4,4) - (1-MOMENTUM)*LEARNINGRATE*
+     &   dCFactors(7) + LEARNINGRATE*MOMENTUM*predCFactors(7)
+        yldCDbPrime(1,2) = yldCDbPrime(1,2) - (1-MOMENTUM)*LEARNINGRATE*
+     &   dCFactors(8) + LEARNINGRATE*MOMENTUM*predCFactors(8)
+        yldCDbPrime(1,3) = yldCDbPrime(1,3) - (1-MOMENTUM)*LEARNINGRATE*
+     &   dCFactors(9) + LEARNINGRATE*MOMENTUM*predCFactors(9)
+        yldCDbPrime(2,1) = yldCDbPrime(2,1) - (1-MOMENTUM)*LEARNINGRATE*
+     &   dCFactors(10) + LEARNINGRATE*MOMENTUM*predCFactors(10)
+        yldCDbPrime(2,3) = yldCDbPrime(2,3) - (1-MOMENTUM)*LEARNINGRATE*
+     &   dCFactors(11) + LEARNINGRATE*MOMENTUM*predCFactors(11)
+        yldCDbPrime(3,1) = yldCDbPrime(3,1) - (1-MOMENTUM)*LEARNINGRATE*
+     &   dCFactors(12) + LEARNINGRATE*MOMENTUM*predCFactors(12)
+        yldCDbPrime(3,2) = yldCDbPrime(3,2) - (1-MOMENTUM)*LEARNINGRATE*
+     &   dCFactors(13) + LEARNINGRATE*MOMENTUM*predCFactors(13)
+        yldCDbPrime(4,4) = yldCDbPrime(4,4) - (1-MOMENTUM)*LEARNINGRATE*
+     &   dCFactors(14) + LEARNINGRATE*MOMENTUM*predCFactors(14)
+        predCFactors(:) = dCFactors(:)
         error = errorFunc(YLDM,WEIGHTS,WEIGHTR,WEIGHTB,
      &   exStress,exLankford,yldCPrime,yldCDbPrime)
         WRITE(*,*) 'error: ',error
