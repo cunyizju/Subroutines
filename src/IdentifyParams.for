@@ -106,35 +106,36 @@
       INTEGER YLDM,i
       DOUBLE PRECISION WEIGHTS,WEIGHTR,WEIGHTB,exStress(8),
      & exLankford(8),yldCPrime(6,6),yldCDbPrime(6,6),PI,bufStress(6),
-     & eqStress,calc_eqStress,lankford,calc_dPhidX
+     & eqStress,calc_eqStress,preStress,lankford,calc_dPhidX
       PARAMETER(PI=ACOS(-1.0D0))
       errorFunc = 0.0D0
       DO i=1,7
         bufStress(:) = 0.0D0
-        bufStress(1) = exStress(i)*COS((i-1)*PI/12.0D0)**2
-        bufStress(2) = exStress(i)*SIN((i-1)*PI/12.0D0)**2
-        bufStress(6) = exStress(i)*SIN((i-1)*PI/12.0D0)*
-     &   COS((i-1)*PI/12.0D0)
+        bufStress(1) = COS((i-1)*PI/12.0D0)**2
+        bufStress(2) = SIN((i-1)*PI/12.0D0)**2
+        bufStress(6) = SIN((i-1)*PI/12.0D0)*COS((i-1)*PI/12.0D0)
         eqStress = calc_eqStress(YLDM,yldCPrime,yldCDbPrime,bufStress)
+        preStress = exStress(1)/eqStress
         IF (ISNAN(eqStress)) THEN
           WRITE(*,*) 'error occurred, invalid eqStress: ',eqStress
           CALL EXIT
         END IF
-        lankford = 1.0D0 - 4.0D0*YLDM*eqStress/(exStress(i)*
-     &   calc_dPhidX('szz  ',YLDM,yldCPrime,yldCDbPrime,bufStress))
+        lankford = -1.0D0 - 4.0D0*YLDM*eqStress/
+     &   calc_dPhidX('szz  ',YLDM,yldCPrime,yldCDbPrime,bufStress)
         WRITE(*,*) lankford
         errorFunc = errorFunc + 
-     &   WEIGHTS*(eqStress/exStress(i) - 1.0D0)**2 + 
+     &   WEIGHTS*(preStress/exStress(i) - 1.0D0)**2 + 
      &   WEIGHTR*(lankford/exLankford(i) - 1.0D0)**2
       END DO
       bufStress(:) = 0.0D0
-      bufStress(3) = exStress(8)
+      bufStress(3) = 1.0D0
       eqStress = calc_eqStress(YLDM,yldCPrime,yldCDbPrime,bufStress)
+      preStress = exStress(1)/eqStress
       lankford = 
      & calc_dPhidX('syy  ',YLDM,yldCPrime,yldCDbPrime,bufStress)
      & /calc_dPhidX('sxx  ',YLDM,yldCPrime,yldCDbPrime,bufStress)
       errorFunc = errorFunc + 
-     & WEIGHTB*(eqStress/exStress(8) - 1.0D0)**2 + 
+     & WEIGHTB*(preStress/exStress(8) - 1.0D0)**2 + 
      & WEIGHTB*(lankford/exLankford(8) - 1.0D0)**2
       RETURN
       END FUNCTION errorFunc
